@@ -1,0 +1,17 @@
+{
+    "name": "kinone/yaf",
+    "description": "Yaf framework implement by native php",
+    "require": {
+        "php": ">=5.6"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "phpcandy",
+            "email": "phpcandy@163.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {"Kinone\\Yaf\\": "src/"}
+    }
+}
