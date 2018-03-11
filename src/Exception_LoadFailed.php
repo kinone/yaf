@@ -7,7 +7,7 @@
 
 namespace Kinone\Yaf;
 
-class Exception_LoadFailed
+class Exception_LoadFailed extends Exception
 {
 
 }

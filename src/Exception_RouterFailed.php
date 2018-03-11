@@ -7,7 +7,7 @@
 
 namespace Kinone\Yaf;
 
-class Exception_RouterFailed
+class Exception_RouterFailed extends Exception
 {
 
 }

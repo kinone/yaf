@@ -14,6 +14,10 @@ abstract class Response_Abstract
     protected $_header = [];
     protected $_body = [];
 
+    public function __construct()
+    {
+    }
+
     /**
      * @param string $body
      * @param string $name
@@ -42,7 +46,11 @@ abstract class Response_Abstract
      */
     public function prependBody($body, $name = self::DEFAULT_BODY)
     {
-        $this->_body[$name] = $body . $this->_body[$name];
+        if (!isset($this->_body[$name])) {
+            $this->setBody($body, $name);
+        } else {
+            $this->_body[$name] = $body . $this->_body[$name];
+        }
 
         return $this;
     }
@@ -54,7 +62,11 @@ abstract class Response_Abstract
      */
     public function appendBody($body, $name = self::DEFAULT_BODY)
     {
-        $this->_body[$name] .= $body;
+        if (!isset($this->_body[$name])) {
+            $this->setBody($body, $name);
+        } else {
+            $this->_body[$name] .= $body;
+        }
 
         return $this;
     }
@@ -65,7 +77,11 @@ abstract class Response_Abstract
      */
     public function clearBody($name = null)
     {
-        unset($this->_body[$name]);
+        if ($name) {
+            unset($this->_body[$name]);
+        } else {
+            $this->_body = [];
+        }
 
         return $this;
     }

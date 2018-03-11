@@ -7,8 +7,6 @@
 
 namespace Kinone\Yaf;
 
-use Kinone\Http\ResponseAbstract;
-
 final class Dispatcher
 {
     /**
@@ -32,9 +30,14 @@ final class Dispatcher
     private $_plugins;
 
     /**
-     * @var
+     * @var bool
      */
     private $_autoRender = true;
+
+    /**
+     * @var bool
+     */
+    private $_instantlyFlush = false;
 
     /**
      * @var bool
@@ -54,12 +57,12 @@ final class Dispatcher
     /**
      * @var string
      */
-    private $_defaultModule = 'index';
+    private $_defaultModule = 'Index';
 
     /**
      * @var string
      */
-    private $_defaultController = 'index';
+    private $_defaultController = 'Index';
 
     /**
      * @var string
@@ -74,6 +77,7 @@ final class Dispatcher
     private function __construct()
     {
         $this->_router = new Router();
+        $this->_plugins = [];
     }
 
     /**
@@ -92,11 +96,162 @@ final class Dispatcher
      * @param Request_Abstract $request
      *
      * @return Response_Abstract
+     * @throws Exception
      */
     public function dispatch(Request_Abstract $request)
     {
+        $this->_request = $request;
         $response = $request->isCli() ? new Response_Cli() : new Response_Http();
+
+        if (!$request->isRouted()) {
+
+            $this->_notifyPlugins('routerStartup', $response);
+            if (!$this->_router->route($request)) {
+                throw new Exception_RouterFailed('route failed');
+            }
+
+            $this->_notifyPlugins('routerShutdown', $response);
+        }
+        $this->_fixDefault($request);
+        $this->_notifyPlugins('dispatchLoopStartup', $response);
+
+        $this->initView(null);
+
+        $nesting = 5;
+
+        do {
+            $this->_notifyPlugins('preDispatch', $response);
+
+            $this->_handle($response);
+
+            $this->_fixDefault($request);
+
+            $this->_notifyPlugins('postDispatch', $response);
+        } while (--$nesting > 0 && !$this->_request->isDispatched());
+
+        $this->_notifyPlugins('dispatchLoopShutdown', $response);
+
+        if ($nesting == 0 && !$request->isDispatched()) {
+            throw new Exception_DispatchFailed(sprintf('The max dispatch nesting %d was reached', 5));
+        }
+
+        if (!$this->_returnResponse) {
+            $response->response();
+            $response->clearBody();
+        }
+
         return $response;
+    }
+
+    private function _handle(Response_Abstract $response)
+    {
+        $appDir = Application::app()->getAppDirectory();
+        if (!$appDir) {
+            throw new Exception_StartupError(
+                sprintf('%s requires %s(which set the application.directory) to be initialized first', Dispatcher::class, Application::class)
+            );
+        }
+
+        $this->_request->setDispatched(true);
+
+        $module = $this->_request->getModuleName();
+        $controller = $this->_request->getControllerName();
+        $action = $this->_request->getActionName();
+
+        if (!$module) {
+            throw new Exception_DispatchFailed('Unexcepted a empty module name');
+        } else if (!Application::isModuleName($module)) {
+            throw new Exception_DispatchFailed(sprintf('There is no module %s', $module));
+        }
+
+        if (!$controller) {
+            throw new Exception_DispatchFailed('Unexcepted a empty controller name');
+        }
+
+        $controllerObject = $this->_genController($appDir, $module, $controller, $response);
+        if (!$this->_request->isDispatched()) {
+            // forward is called in init function
+            $this->_handle($response);
+        }
+
+        if ($module == $this->_defaultModule) {
+            $tplDir = implode(DIRECTORY_SEPARATOR, [$appDir, 'views']);
+        } else {
+            $tplDir = implode(DIRECTORY_SEPARATOR, [$appDir, 'modules', $module, 'views']);
+        }
+
+        $this->_view->setScriptPath($tplDir);
+
+        $func = strtolower($action) . 'Action';
+
+        if (method_exists($controllerObject, $func)) {
+            call_user_func_array([$controllerObject, $func], $this->_request->getParams());
+        } else {
+            throw new Exception_LoadFailed_Action();
+        }
+
+        if ($this->_autoRender) {
+            if (!$this->_instantlyFlush) {
+                $content = $controllerObject->render($action);
+                $response->appendBody($content);
+            } else {
+                $controllerObject->dispaly($action);
+            }
+        }
+    }
+
+    /**
+     * @param $appDir
+     * @param $module
+     * @param $controller
+     * @param Response_Abstract $response
+     * @return Controller_Abstract
+     */
+    private function _genController($appDir, $module, $controller, Response_Abstract $response)
+    {
+        if ($module != $this->_defaultModule) {
+            $file = implode(DIRECTORY_SEPARATOR, [$appDir, 'modules', $module, 'controllers', $controller]) . '.php';
+            Loader::import($file);
+        }
+        $controllerName = ucfirst($controller) . 'Controller';
+
+        return new $controllerName($this->_request, $response, $this->_view);
+    }
+
+    private function _fixDefault(Request_Abstract $request)
+    {
+        $module = $request->getModuleName();
+        $controller = $request->getControllerName();
+        $action = $request->getActionName();
+
+        if (!$module) {
+            $request->setModuleName($this->_defaultModule);
+        } else {
+            $request->setModuleName(ucfirst(strtolower($module)));
+        }
+
+        if (!$controller) {
+            $request->setControllerName($this->_defaultController);
+        } else {
+            $request->setControllerName(ucfirst(strtolower($controller)));
+        }
+
+        if (!$action) {
+            $request->setActionName($this->_defaultAction);
+        } else {
+            $request->setActionName(strtolower($action));
+        }
+    }
+
+    private function _notifyPlugins($event, Response_Abstract $response)
+    {
+        foreach ($this->_plugins as $plugin) {
+            if (!method_exists($plugin, $event)) {
+                continue;
+            }
+
+            call_user_func_array([$plugin, $event], [$this->_request, $response]);
+        }
     }
 
     public function registerPlugin(Plugin_Abstract $plugin)
@@ -114,6 +269,11 @@ final class Dispatcher
     public function disableView()
     {
         $this->_autoRender = false;
+    }
+
+    public function initView($tplDir, $options = [])
+    {
+        $this->_view = new View_Simple($tplDir);
     }
 
     public function setView(View_Interface $view)
@@ -152,7 +312,7 @@ final class Dispatcher
 
     public function setErrorHandler(callable $callable)
     {
-        
+
     }
 
     public function setDefaultModule($module)

@@ -28,7 +28,7 @@ class Config_Ini extends Config_Abstract
             }
 
             if (!$section) {
-                $section = ini_get('yaf.environ');
+                $section = ini_get('yaf.environ') ?: 'product';
             }
 
             if ($section && !isset($config[$section])) {

@@ -7,7 +7,7 @@
 
 namespace Kinone\Yaf;
 
-class Exception_StartupError
+class Exception_StartupError extends Exception
 {
 
 }

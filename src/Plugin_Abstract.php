@@ -7,7 +7,12 @@
 
 namespace Kinone\Yaf;
 
-class Plugin_Abstract
+abstract class Plugin_Abstract
 {
-
+    abstract public function routerStartup(Request_Abstract $request, Response_Abstract $response);
+    abstract public function routerShutdown(Request_Abstract $request, Response_Abstract $response);
+    abstract public function dispatchLoopStartup(Request_Abstract $request, Response_Abstract $response);
+    abstract public function preDispatch(Request_Abstract $request, Response_Abstract $response);
+    abstract public function postDispatch(Request_Abstract $request, Response_Abstract $response);
+    abstract public function dispatchLoopShutdown(Request_Abstract $request, Response_Abstract $response);
 }

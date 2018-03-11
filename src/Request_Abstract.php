@@ -12,6 +12,17 @@ abstract class Request_Abstract
     const SCHEME_HTTP = 'http';
     const SCHEME_HTTPS = 'https';
 
+    const METHOD_HEAD = 'HEAD';
+    const METHOD_GET = 'GET';
+    const METHOD_POST = 'POST';
+    const METHOD_PUT = 'PUT';
+    const METHOD_PATCH = 'PATCH';
+    const METHOD_DELETE = 'DELETE';
+    const METHOD_PURGE = 'PURGE';
+    const METHOD_OPTIONS = 'OPTIONS';
+    const METHOD_TRACE = 'TRACE';
+    const METHOD_CONNECT = 'CONNECT';
+
     public $module;
 
     public $controller;
@@ -28,7 +39,9 @@ abstract class Request_Abstract
 
     protected $_baseUri;
 
-    protected $uri;
+    protected $_uri;
+
+    protected $_pathinfo;
 
     protected $dispatched = false;
 
@@ -44,37 +57,37 @@ abstract class Request_Abstract
 
     public function isGet()
     {
-        return $this->method === 'GET';
+        return $this->getMethod() === self::METHOD_GET;
     }
 
     public function isPost()
     {
-        return $this->method === 'POST';
+        return $this->getMethod() === self::METHOD_POST;
     }
 
     public function isHead()
     {
-        return $this->method === 'HEAD';
+        return $this->getMethod() === self::METHOD_HEAD;
     }
 
     public function isDelete()
     {
-        return $this->method == 'DELETE';
+        return $this->getMethod() == self::METHOD_DELETE;
     }
 
     public function isPatch()
     {
-        return $this->method == 'PATCH';
+        return $this->getMethod() == self::METHOD_PATCH;
     }
 
     public function isPut()
     {
-        return $this->method == 'PUT';
+        return $this->getMethod() == self::METHOD_PUT;
     }
 
     public function isOptions()
     {
-        return $this->method == 'OPTIONS';
+        return $this->getMethod() == self::METHOD_OPTIONS;
     }
 
     public function isCli()
@@ -82,14 +95,14 @@ abstract class Request_Abstract
         return PHP_SAPI === 'cli';
     }
 
-    public function getServer($name)
+    public function getServer($name, $default = null)
     {
-        
+        return isset($_SERVER[$name]) ? $_SERVER[$name] : $default;
     }
 
-    public function getEnv($name, $default = 0)
+    public function getEnv($name, $default = null)
     {
-
+        return isset($_ENV[$name]) ? $_ENV[$name] : $default;
     }
 
     public function setParam($name, $value)
@@ -130,21 +143,31 @@ abstract class Request_Abstract
     public function setModuleName($module)
     {
         $this->module = $module;
+
+        return $this;
     }
 
     public function setControllerName($controller)
     {
         $this->controller = $controller;
+
+        return $this;
     }
 
     public function setActionName($action)
     {
         $this->action = $action;
+
+        return $this;
     }
 
     public function getMethod()
     {
-        
+        if (null == $this->method) {
+            $this->method = $this->getServer('REQUEST_METHOD', self::METHOD_GET);
+        }
+
+        return $this->method;
     }
 
     public function getLanguage()
@@ -166,12 +189,17 @@ abstract class Request_Abstract
 
     public function getRequestUri()
     {
-        return $this->uri;
+        return $this->_uri;
+    }
+
+    public function getPathinfo()
+    {
+        return $this->_pathinfo;
     }
 
     public function setRequestUri($uri)
     {
-        $this->uri = $uri;
+        $this->_uri = $uri;
     }
 
     public function isDispatched()

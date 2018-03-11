@@ -27,7 +27,7 @@ class Application
     /**
      * @var array
      */
-    private $modules = [];
+    private $modules = ['Index'];
 
     /**
      * @var string
@@ -76,6 +76,9 @@ class Application
                 throw new Exception($exception->getMessage());
             }
             $bootstrap = $ref->newInstance();
+            if (!$bootstrap instanceof Bootstrap_Abstract) {
+                throw new Exception_TypeError(sprintf('Bootstrap should be instance of %s', Bootstrap_Abstract::class));
+            }
         }
 
         $methods = $ref->getMethods(\ReflectionMethod::IS_PUBLIC);
@@ -88,13 +91,17 @@ class Application
         return $this;
     }
 
+    /**
+     * @throws Exception_StartupError
+     */
     public function run()
     {
-        $this->execute();
-    }
+        if ($this->running) {
+            throw new Exception_StartupError("An application instance already run");
+        }
 
-    public function execute()
-    {
+        $this->running = true;
+
         if (PHP_SAPI === 'cli') {
             $request = new Request_Simple();
         } else {
@@ -103,6 +110,11 @@ class Application
 
         $response = Dispatcher::getInstance()->dispatch($request);
         $response->response();
+    }
+
+    public function execute()
+    {
+
     }
 
     /**
@@ -119,6 +131,15 @@ class Application
     public static function app()
     {
         return self::$app;
+    }
+
+    public static function isModuleName($module)
+    {
+        if (null == self::$app) {
+            return false;
+        }
+
+        return in_array(ucfirst(strtolower($module)), self::$app->modules);
     }
 
     /**

@@ -34,8 +34,18 @@ final class Loader
         $appDirectory = Application::app()->getAppDirectory();
         if ($name == 'Bootstrap') {
             $file = $appDirectory . '/Bootstrap.php';
-            self::import($file);
+        } else if (substr($name, -6) === 'Plugin') {
+            $file = $appDirectory . '/plugins/' . substr($name, 0, -6) . '.php';
+        } else if (substr($name, -10) === 'Controller') {
+            $file = $appDirectory . '/controllers/' . substr($name, 0, -10) . '.php';
+        } else if (substr($name, -5) === 'Model') {
+            $file = $appDirectory . '/models/' . substr($name, 0, -5) . '.php';
+        } else {
+            return false;
         }
+
+        self::import($file);
+        return true;
     }
 
     public static function getInstance($localLibrary, $globalLibrary = null)

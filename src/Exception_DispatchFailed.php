@@ -7,7 +7,7 @@
 
 namespace Kinone\Yaf;
 
-class Exception_DispatchFailed
+class Exception_DispatchFailed extends Exception
 {
 
 }

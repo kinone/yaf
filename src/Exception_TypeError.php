@@ -7,7 +7,7 @@
 
 namespace Kinone\Yaf;
 
-class Exception_TypeError
+class Exception_TypeError extends Exception
 {
 
 }
