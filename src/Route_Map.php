@@ -64,9 +64,7 @@ final class Route_Map implements Route_Interface
                     unset($last);
                 }
             }
-            foreach($params as $k => $v) {
-                $request->setParam($k, $v);
-            }
+            $request->setParam($params);
         }
 
         return true;

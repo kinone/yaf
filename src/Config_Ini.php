@@ -10,6 +10,12 @@ namespace Kinone\Yaf;
 
 class Config_Ini extends Config_Abstract
 {
+    /**
+     * Config_Ini constructor.
+     * @param $file
+     * @param null $section
+     * @throws Exception
+     */
     public function __construct($file, $section = null)
     {
         $this->_keys = [];
@@ -26,10 +32,6 @@ class Config_Ini extends Config_Abstract
 
             if (!$config) {
                 throw new Exception(sprintf('Parsing ini file \'%s\' failed', $file));
-            }
-
-            if (!$section) {
-                $section = ini_get('yaf.environ') ?: 'product';
             }
 
             if ($section && !isset($config[$section])) {

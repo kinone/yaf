@@ -44,6 +44,7 @@ final class Route_Supervar implements Route_Interface
      * @param array $info
      * @param array $query
      * @return string
+     * @throws Exception
      */
     public function assemble(array $info, array $query = [])
     {

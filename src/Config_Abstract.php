@@ -12,12 +12,16 @@ abstract class Config_Abstract implements \Countable, \Iterator, \ArrayAccess
 {
     protected $_keys;
     protected $_config;
-
     protected $_readonly = true;
 
     abstract public function get($name, $default = null);
     abstract public function readonly();
     abstract public function toArray();
+
+    public function __construct($config, $section = null)
+    {
+        $this->_config = $config;
+    }
 
     /**
      * Count elements of an object
@@ -41,7 +45,11 @@ abstract class Config_Abstract implements \Countable, \Iterator, \ArrayAccess
      */
     public function current()
     {
-        return current($this->_config);
+        $item = current($this->_config);
+        if (is_array($item)) {
+            return new static($item);
+        }
+        return new $item;
     }
 
     /**

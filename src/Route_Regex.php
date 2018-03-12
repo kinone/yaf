@@ -84,9 +84,7 @@ final class Route_Regex implements Route_Interface
             }
         }
 
-        foreach ($args as $k => $v) {
-            $request->setParam($k, $v);
-        }
+        $request->setParam($args);
 
         return true;
     }
@@ -124,6 +122,7 @@ final class Route_Regex implements Route_Interface
 
     private function match($uri, &$args)
     {
+
         $ret = preg_match($this->_match, $uri, $args);
 
         foreach ($args as $k => $arg) {

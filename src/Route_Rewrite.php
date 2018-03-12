@@ -52,9 +52,7 @@ final class Route_Rewrite implements Route_Interface
             }
         }
 
-        foreach ($args as $k => $v) {
-            $request->setParam($k, $v);
-        }
+        $request->setParam($args);
 
         return true;
     }

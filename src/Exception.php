@@ -8,7 +8,7 @@
 
 namespace Kinone\Yaf;
 
-class Exception extends \RuntimeException
+class Exception extends \Exception
 {
 
 }

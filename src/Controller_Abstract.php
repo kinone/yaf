@@ -10,7 +10,7 @@ namespace Kinone\Yaf;
 
 abstract class Controller_Abstract
 {
-    private $_actions;
+    public $_actions;
 
     /**
      * @var string
@@ -37,12 +37,16 @@ abstract class Controller_Abstract
      */
     private $_view;
 
-    final public function __construct(Request_Abstract $request, Response_Abstract $response, View_Interface $view)
+    private $_invokeArgs = [];
+
+    final public function __construct(Request_Abstract $request, Response_Abstract $response, View_Interface $view, $invokeArgs = [])
     {
         $this->_request = $request;
         $this->_response = $response;
         $this->_view = $view;
         $this->_name = strtolower(substr(static::class, 0, -10));
+        $this->_module = $request->getModuleName();
+        $this->_invokeArgs = $invokeArgs;
 
         $this->init();
     }
@@ -54,12 +58,51 @@ abstract class Controller_Abstract
 
     public function forward($module, $controller = null, $action = null, $params = null)
     {
-        
+        if (!$this->_request instanceof Request_Abstract) {
+            return false;
+        }
+
+        $args = func_get_args();
+        $argsCount = count($args);
+        switch ($argsCount) {
+            case 1:
+                $this->_request->setActionName($args[0]);
+                break;
+            case 2:
+                if (is_array($controller)) {
+                    $this->_request->setActionName($args[0]);
+                    $this->_request->setParam($args[1]);
+                } else {
+                    $this->_request->setControllerName($args[0])
+                        ->setActionName($args[1]);
+                }
+                break;
+            case 3:
+                if (is_array($action)) {
+                    $this->_request->setControllerName($args[0])
+                        ->setActionName($args[1])
+                        ->setParam($args[2]);
+                } else {
+                    $this->_request->setModuleName($args[0])
+                        ->setControllerName($args[1])
+                        ->setActionName($args[2]);
+                }
+                break;
+            case 4:
+                $this->_request->setModuleName($module)
+                    ->setControllerName($controller)
+                    ->setActionName($action)
+                    ->setParam($params);
+                break;
+        }
+
+        $this->_request->setDispatched(false);
+        return true;
     }
 
     public function redirect($url)
     {
-        
+        header('Location:' . $url);
     }
 
     public function getModuleName()
@@ -83,9 +126,30 @@ abstract class Controller_Abstract
         return $this->_view;
     }
 
-    public function initView($vars = [])
+    /**
+     * @param array $options
+     * @return $this
+     */
+    public function initView($options = [])
     {
+        return $this;
+    }
 
+    /**
+     * @return array
+     */
+    public function getInvokeArgs()
+    {
+        return $this->_invokeArgs;
+    }
+
+    /**
+     * @param $name
+     * @return mixed
+     */
+    public function getInvodeArg($name)
+    {
+        return (isset($this->_invokeArgs[$name])) ? $this->_invokeArgs[$name] : null;
     }
 
     /**
@@ -103,7 +167,7 @@ abstract class Controller_Abstract
     public function setViewPath($path)
     {
         $this->_view->setScriptPath($path);
-        
+
         return $this;
     }
 
@@ -121,7 +185,13 @@ abstract class Controller_Abstract
      */
     public function dispaly($tpl, $vars = [])
     {
-        $tpl = implode(DIRECTORY_SEPARATOR, [$this->_name, $tpl . '.php']);
+        Dispatcher::getInstance()->disableView();
+
+        $name = str_replace('_', DIRECTORY_SEPARATOR, $this->_name);
+        if ($tpl[0] !== '/') {
+            $ext = Application::app()->getConfig()->get('application.view.ext') ?: 'php';
+            $tpl = implode(DIRECTORY_SEPARATOR, [$name, $tpl . '.' . $ext]);
+        }
         $this->_view->dispaly($tpl, $vars);
     }
 
@@ -132,7 +202,13 @@ abstract class Controller_Abstract
      */
     public function render($tpl, $vars = [])
     {
-        $tpl = implode(DIRECTORY_SEPARATOR, [$this->_name, $tpl . '.php']);
+        Dispatcher::getInstance()->disableView();
+
+        $name = str_replace('_', DIRECTORY_SEPARATOR, $this->_name);
+        if ($tpl[0] !== '/') {
+            $ext = Application::app()->getConfig()->get('application.view.ext') ?: 'php';
+            $tpl = implode(DIRECTORY_SEPARATOR, [$name, $tpl . '.' . $ext]);
+        }
         return $this->_view->render($tpl, $vars);
     }
 }

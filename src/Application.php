@@ -13,7 +13,7 @@ class Application
     /**
      * @var self
      */
-    private static $app;
+    private static $_app;
 
     /**
      * @var Config_Abstract
@@ -28,26 +28,42 @@ class Application
     /**
      * @var array
      */
-    private $modules = ['Index'];
+    private $_modules = ['Index'];
 
     /**
      * @var string
      */
-    private $environ = 'product';
+    private $_environ = 'product';
 
     /**
      * @var bool
      */
-    private $running;
+    private $_running = false;
 
     /**
      * @var string
      */
     private $appDirectory;
 
+    /**
+     * Application constructor.
+     * @param $config
+     * @param string|null $environ
+     * @throws Exception
+     */
     public function __construct($config, $environ = null)
     {
-        $this->environ = $environ;
+        self::$_app = $this;
+
+        $this->_handleError();
+        $this->_handleException();
+
+        ob_start();
+
+        if (!$environ) {
+            $environ = ini_get('yaf.environ') ?: 'product';
+        }
+        $this->_environ = $environ;
 
         if (is_array($config)) {
             $this->config = new Config_Simple($config);
@@ -55,23 +71,35 @@ class Application
             $this->config = new Config_Ini($config, $environ);
         }
 
-        self::$app = $this;
-
         $this->dispatcher = Dispatcher::getInstance();
+        $this->dispatcher->setRequest(new Request_Http());
+
         $this->appDirectory = $this->config->get('application.directory');
+
+        if (!$this->appDirectory) {
+            throw new Exception_StartupError('Expected a directory entry in application configures');
+        }
 
         $modules = $this->config->get('application.modules');
         if ($modules) {
-            $this->modules = array_map('ucfirst', explode(',', $modules));
+            $this->_modules = array_map('ucfirst', explode(',', $modules));
         }
 
         $localLibary = $this->config->get('application.libaray');
         $globalLibary = ini_get('yaf.library');
         Loader::getInstance($localLibary, $globalLibary);
-
-        ob_start();
     }
 
+    public function __destruct()
+    {
+        ob_end_flush();
+    }
+
+    /**
+     * @param Bootstrap_Abstract|null $bootstrap
+     * @return $this
+     * @throws Exception
+     */
     public function bootstrap(Bootstrap_Abstract $bootstrap = null)
     {
         if ($bootstrap) {
@@ -99,31 +127,27 @@ class Application
     }
 
     /**
-     * @throws Exception_StartupError
+     * @throws Exception
      */
     public function run()
     {
-        if ($this->running) {
+        if ($this->_running) {
             throw new Exception_StartupError("An application instance already run");
         }
 
-        $this->running = true;
+        $this->_running = true;
 
-        if (PHP_SAPI === 'cli') {
-            $request = new Request_Simple();
-        } else {
-            $request = new Request_Http();
-        }
-
-        $response = Dispatcher::getInstance()->dispatch($request);
-        $response->response();
-
-        ob_end_flush();
+        Dispatcher::getInstance()->dispatch();
     }
 
-    public function execute()
+    /**
+     * @param callable $callback
+     * @param array $args
+     * @return mixed
+     */
+    public function execute(callable $callback, ...$args)
     {
-
+        return call_user_func_array($callback, $args);
     }
 
     /**
@@ -131,7 +155,7 @@ class Application
      */
     public function environ()
     {
-        return $this->environ;
+        return $this->_environ;
     }
 
     /**
@@ -139,16 +163,16 @@ class Application
      */
     public static function app()
     {
-        return self::$app;
+        return self::$_app;
     }
 
     public static function isModuleName($module)
     {
-        if (null == self::$app) {
+        if (null == self::$_app) {
             return false;
         }
 
-        return in_array(ucfirst(strtolower($module)), self::$app->modules);
+        return in_array(ucfirst(strtolower($module)), self::$_app->_modules);
     }
 
     /**
@@ -164,7 +188,7 @@ class Application
      */
     public function getModules()
     {
-        return $this->modules;
+        return $this->_modules;
     }
 
     /**
@@ -177,11 +201,36 @@ class Application
 
     public function setAppDirectory($path)
     {
-        
+        $this->appDirectory = $path;
+
+        return $this;
     }
 
     public function getAppDirectory()
     {
-        return $this->config->get('application.directory');
+        return $this->appDirectory;
+    }
+
+    private function _handleError()
+    {
+        set_error_handler(function($code, $message, $file, $line){
+            if (!(error_reporting() & $code)) {
+                return false;
+            }
+
+            throw new \ErrorException($message, $code, 0, $file, $line);
+        });
+    }
+
+    private function _handleException()
+    {
+        set_exception_handler(function($exception){
+            ob_end_clean();
+            if (!$exception instanceof Exception) {
+                throw new Exception($exception->getMessage(), $exception->getCode());
+            } else {
+                throw $exception;
+            }
+        });
     }
 }

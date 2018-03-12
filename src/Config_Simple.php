@@ -10,11 +10,6 @@ namespace Kinone\Yaf;
 
 class Config_Simple extends Config_Abstract
 {
-    public function __construct(array $arr)
-    {
-        $this->_config = $arr;
-    }
-
     public function get($name, $default = null)
     {
         if (!isset($this->_config[$name])) {

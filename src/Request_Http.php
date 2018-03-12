@@ -12,10 +12,19 @@ class Request_Http extends Request_Abstract
 {
     private $_baseUrl;
 
-    public function __construct()
+    public function __construct($uri = null, $baseUri = null)
     {
-        $this->_baseUri = $this->prepareBaseUri();
-        $this->_uri = $this->prepareRequestUri();
+        if (null === $uri) {
+            $this->_uri = $this->prepareRequestUri();
+        }
+
+        if (null === $baseUri) {
+            $this->_baseUri = $this->prepareBaseUri();
+        }
+
+        if ($this->isCli()) {
+            $this->method = 'Cli';
+        }
     }
 
     public function getPathinfo()
@@ -55,7 +64,27 @@ class Request_Http extends Request_Abstract
 
     private function prepareRequestUri()
     {
-        return $this->getServer('REQUEST_URI');
+        $uri = null;
+        if ($uri = $this->getServer('HTTP_X_REWRITE_URL')) {
+            // do nothing
+        } else if ($this->getServer('IIS_WasUrlRewritten') && ($uri = $this->getServer('UNENCODED_URL'))) {
+            // do nothing
+        } else if ($uri = $this->getServer('PATH_INFO')) {
+            // do nothing
+        } else if ($uri = $this->getServer('REQUEST_URI')) {
+            if (strncasecmp($uri, 'http', 4) == 0) {
+                $info = parse_url($uri);
+                if (isset($info['path'])) {
+                    $uri = $info['path'];
+                }
+            } else if (($pos = strpos($uri, '?')) !== false){
+                $uri = substr($uri, $pos);
+            }
+        } else if ($uri = $this->getServer('ORIG_PATH_INFO')) {
+            // do nothing
+        }
+
+        return '/' . trim($uri, '/');
     }
 
     private function preparePathinfo()
@@ -91,7 +120,17 @@ class Request_Http extends Request_Abstract
 
     public function get($name, $default = null)
     {
-        // TODO: Implement get() method.
+        if (isset($this->params[$name])) {
+            return $this->params[$name];
+        }
+
+        foreach([$_POST, $_GET, $_COOKIE, $_SERVER] as $item) {
+            if (isset($item[$name])) {
+                return $item[$name];
+            }
+        }
+
+        return $default;
     }
 
     public function getQuery($name, $default = null)
@@ -121,6 +160,12 @@ class Request_Http extends Request_Abstract
 
     public function isXmlHttpRequest($name, $default = null)
     {
-        // TODO: Implement isXmlHttpRequest() method.
+        $str = $this->getServer('HTTP_X_REQUESTED_WITH', '');
+
+        if (strncasecmp($str, 'XMLHttpRequest', 14) == 0) {
+            return true;
+        }
+
+        return false;
     }
 }

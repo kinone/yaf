@@ -53,7 +53,7 @@ final class Dispatcher
     /**
      * @var bool
      */
-    private $_catchException = true;
+    private $_catchException = false;
 
     /**
      * @var string
@@ -99,9 +99,16 @@ final class Dispatcher
      * @return Response_Abstract
      * @throws Exception
      */
-    public function dispatch(Request_Abstract $request)
+    public function dispatch(Request_Abstract $request = null)
     {
-        $this->_request = $request;
+        if (null == $request && null == $this->_request) {
+            throw new Exception_TypeError(sprintf("Expect a %s instance", Request_Abstract::class));
+        } else if (null == $request) {
+            $request = $this->_request;
+        } else {
+            $this->_request = $request;
+        }
+
         $response = $request->isCli() ? new Response_Cli() : new Response_Http();
 
         if (!$request->isRouted()) {
@@ -110,14 +117,14 @@ final class Dispatcher
             if (!$this->_router->route($request)) {
                 throw new Exception_RouterFailed('route failed');
             }
-
+            $this->_fixDefault($request);
             $this->_notifyPlugins('routerShutdown', $response);
+        } else {
+            $this->_fixDefault($request);
         }
-        $this->_fixDefault($request);
         $this->_notifyPlugins('dispatchLoopStartup', $response);
 
         $this->initView(null);
-
         $nesting = 5;
 
         do {
@@ -144,16 +151,20 @@ final class Dispatcher
         return $response;
     }
 
+    /**
+     * @param Response_Abstract $response
+     * @throws Exception
+     */
     private function _handle(Response_Abstract $response)
     {
+        $this->_request->setDispatched(true);
+
         $appDir = Application::app()->getAppDirectory();
         if (!$appDir) {
             throw new Exception_StartupError(
                 sprintf('%s requires %s(which set the application.directory) to be initialized first', Dispatcher::class, Application::class)
             );
         }
-
-        $this->_request->setDispatched(true);
 
         $module = $this->_request->getModuleName();
         $controller = $this->_request->getControllerName();
@@ -186,7 +197,11 @@ final class Dispatcher
         $func = strtolower($action) . 'Action';
 
         if (method_exists($controllerObject, $func)) {
-            call_user_func_array([$controllerObject, $func], $this->_request->getParams());
+            $ret = call_user_func_array([$controllerObject, $func], $this->_request->getParams());
+            if ($ret === false) {
+                /* no auto-randering */
+                return;
+            }
         } else {
             throw new Exception_LoadFailed_Action(sprintf('There is no %s in %s', $func, get_class($controllerObject)));
         }
@@ -207,22 +222,34 @@ final class Dispatcher
      * @param $controller
      * @param Response_Abstract $response
      * @return Controller_Abstract
+     * @throws Exception
      */
     private function _genController($appDir, $module, $controller, Response_Abstract $response)
     {
+        $controllerName = ucfirst($controller) . 'Controller';
+        if (class_exists($controllerName, false)) {
+            return new $controllerName($this->_request, $response, $this->_view);
+        }
+
         if ($module != $this->_defaultModule) {
             $file = implode(DIRECTORY_SEPARATOR, [$appDir, 'modules', $module, 'controllers', $controller]) . '.php';
-            Loader::import($file);
+            if (!Loader::import($file)) {
+                throw new Exception_LoadFailed_Controller(sprintf('Faild opening controller script: %s', $file));
+            }
         }
-        $controllerName = ucfirst($controller) . 'Controller';
 
-        $controller = new $controllerName($this->_request, $response, $this->_view);
+        try {
+            $ref = new \ReflectionClass($controllerName);
+            $controller = $ref->newInstance($this->_request, $response, $this->_view);
+        } catch (\Exception $ex) {
+            throw new Exception_LoadFailed_Controller($ex->getMessage());
+        }
 
         if (!$controller instanceof Controller_Abstract) {
             throw new Exception_TypeError(sprintf('Controller must be instance of %s', Controller_Abstract::class));
         }
 
-        return$controller;
+        return $controller;
     }
 
     private function _fixDefault(Request_Abstract $request)
@@ -280,7 +307,7 @@ final class Dispatcher
 
     public function initView($tplDir, $options = [])
     {
-        $this->_view = new View_Simple($tplDir);
+        $this->_view = new View_Simple($tplDir, $options);
     }
 
     public function setView(View_Interface $view)
@@ -290,7 +317,7 @@ final class Dispatcher
         return $this;
     }
 
-    public function getView(View_Interface $view)
+    public function getView()
     {
         return $this->_view;
     }

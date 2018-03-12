@@ -93,7 +93,7 @@ abstract class Request_Abstract
 
     public function isCli()
     {
-        return PHP_SAPI === 'cli';
+        return strncasecmp(PHP_SAPI, 'cli', 3) == 0;
     }
 
     public function getServer($name, $default = null)
@@ -106,9 +106,15 @@ abstract class Request_Abstract
         return isset($_ENV[$name]) ? $_ENV[$name] : $default;
     }
 
-    public function setParam($name, $value)
+    public function setParam($name, $value = null)
     {
-        $this->params[$name] = $value;
+        if (is_array($name)) {
+            $this->params = array_replace($this->params, $name);
+        } else {
+            $this->params[$name] = $value;
+        }
+
+        return $this;
     }
 
     public function getParam($name, $default = null)
@@ -173,7 +179,38 @@ abstract class Request_Abstract
 
     public function getLanguage()
     {
-        
+        if ($this->language != null) {
+            return $this->language;
+        }
+        $acceptLanguages = $this->getServer('HTTP_ACCEPT_LANGUAGE');
+        if (!$acceptLanguages) {
+            return null;
+        }
+
+        $langs = explode(',', $acceptLanguages);
+        $prefer = null;
+        $max = 0;
+        foreach ($langs as $lang) {
+            $lang = trim($lang);
+            if (($pos = strpos($lang, 'q=')) > 1) {
+                $q = floatval(substr($lang, $pos + 2));
+                $lang = substr($lang, 0, $pos - 1);
+                if ($q > $max) {
+                    $prefer = $lang;
+                    $max = $q;
+                }
+            } else {
+                if ($max < 1) {
+                    $max = 1;
+                    $prefer = $lang;
+                }
+            }
+        }
+        if ($prefer) {
+            $this->language = $prefer;
+        }
+
+        return $prefer;
     }
 
     public function setBaseUri($baseUri)
