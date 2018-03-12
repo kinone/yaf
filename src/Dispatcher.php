@@ -161,7 +161,7 @@ final class Dispatcher
         if (!$module) {
             throw new Exception_DispatchFailed('Unexcepted a empty module name');
         } else if (!Application::isModuleName($module)) {
-            throw new Exception_DispatchFailed(sprintf('There is no module %s', $module));
+            throw new Exception_LoadFailed_Module(sprintf('There is no module %s', $module));
         }
 
         if (!$controller) {
@@ -187,7 +187,7 @@ final class Dispatcher
         if (method_exists($controllerObject, $func)) {
             call_user_func_array([$controllerObject, $func], $this->_request->getParams());
         } else {
-            throw new Exception_LoadFailed_Action();
+            throw new Exception_LoadFailed_Action(sprintf('There is no %s in %s', $func, get_class($controllerObject)));
         }
 
         if ($this->_autoRender) {

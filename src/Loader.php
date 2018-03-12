@@ -13,6 +13,9 @@ final class Loader
     private $globalLibrary;
     private $localNamespace = [];
 
+    /**
+     * @var self
+     */
     private static $ins;
 
     private function __construct($localLibrary, $gloablLibaray)
@@ -31,17 +34,26 @@ final class Loader
 
     public static function autoload($name)
     {
+        $name = str_replace(['_', '\\'], DIRECTORY_SEPARATOR, $name);
+
         $appDirectory = Application::app()->getAppDirectory();
         if ($name == 'Bootstrap') {
             $file = $appDirectory . '/Bootstrap.php';
         } else if (substr($name, -6) === 'Plugin') {
-            $file = $appDirectory . '/plugins/' . substr($name, 0, -6) . '.php';
+            $filename = substr($name, 0, -6);
+            $file = implode(DIRECTORY_SEPARATOR, [$appDirectory, 'plugins', $filename . '.php']);
         } else if (substr($name, -10) === 'Controller') {
-            $file = $appDirectory . '/controllers/' . substr($name, 0, -10) . '.php';
+            $filename = substr($name, 0, -10);
+            $file = implode(DIRECTORY_SEPARATOR, [$appDirectory, 'controllers', $filename . '.php']);
         } else if (substr($name, -5) === 'Model') {
-            $file = $appDirectory . '/models/' . substr($name, 0, -5) . '.php';
+            $filename = substr($name, 0, -5);
+            $file = implode(DIRECTORY_SEPARATOR, [$appDirectory, 'models', $filename . '.php']);
         } else {
-            return false;
+            if (self::$ins->isLocalName($name)) {
+                $file = implode(DIRECTORY_SEPARATOR, [self::$ins->getLibraryPath(), $name . '.php']);
+            } else {
+                $file = implode(DIRECTORY_SEPARATOR, [self::$ins->getLibraryPath(true), $name . '.php']);
+            }
         }
 
         self::import($file);
@@ -52,7 +64,7 @@ final class Loader
     {
         if (null == self::$ins) {
             self::$ins = new self($localLibrary, $globalLibrary);
-            spl_autoload_register([self::class, 'autoload'], false, true);
+            spl_autoload_register([self::class, 'autoload'], false);
         }
 
         return self::$ins;
@@ -76,7 +88,14 @@ final class Loader
 
     public function isLocalName($name)
     {
+        foreach ($this->localNamespace as $prefix) {
+            $l = strlen($prefix);
+            if (substr($name, 0, $l) === $prefix && isset($name[$l+1]) && $name[$l+1] === '/') {
+                return true;
+            }
+        }
 
+        return false;
     }
 
     public function setLibraryPath($path, $global = false)

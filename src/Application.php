@@ -59,9 +59,13 @@ class Application
         $this->dispatcher = Dispatcher::getInstance();
         $this->appDirectory = $this->config->get('application.directory');
 
+        $modules = $this->config->get('application.modules');
+        if ($modules) {
+            $this->modules = array_map('ucfirst', explode(',', $modules));
+        }
+
         $localLibary = $this->config->get('application.libaray');
         $globalLibary = ini_get('yaf.library');
-
         Loader::getInstance($localLibary, $globalLibary);
     }
 

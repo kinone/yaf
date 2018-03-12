@@ -95,27 +95,27 @@ class Request_Http extends Request_Abstract
 
     public function getQuery($name, $default = null)
     {
-        // TODO: Implement getQuery() method.
+        return isset($_GET[$name]) ? $_GET[$name] : $default;
     }
 
     public function getPost($name, $default = null)
     {
-        // TODO: Implement getPost() method.
+        return isset($_POST[$name]) ? $_POST[$name] : $default;
     }
 
     public function getRequest($name, $default = null)
     {
-        // TODO: Implement getRequest() method.
+        return isset($_REQUEST[$name]) ? $_REQUEST[$name] : $default;
     }
 
     public function getCookie($name, $default = null)
     {
-        // TODO: Implement getCookie() method.
+        return isset($_COOKIE[$name]) ? $_COOKIE[$name] : $default;
     }
 
     public function getFiles($name, $default = null)
     {
-        // TODO: Implement getFiles() method.
+        return (isset($_FILES[$name])) ? $_FILES[$name] : $default;
     }
 
     public function isXmlHttpRequest($name, $default = null)

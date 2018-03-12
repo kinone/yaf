@@ -7,9 +7,7 @@
 
 namespace Kinone\Yaf;
 
-use Symfony\Component\HttpFoundation\Request;
-
-class Route_Static implements Route_Interface
+final class Route_Static implements Route_Interface
 {
     /**
      * @param Request_Abstract $request
@@ -49,10 +47,10 @@ class Route_Static implements Route_Interface
             $request->setParam($k, $v);
         }
 
-        $request->setModuleName($module);
-        $request->setControllerName($controller);
-        $request->setActionName($action);
-        $request->setRouted(true);
+        $request->setModuleName($module)
+            ->setControllerName($controller)
+            ->setActionName($action)
+            ->setRouted(true);
 
         return true;
     }
