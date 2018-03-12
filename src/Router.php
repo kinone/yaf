@@ -2,7 +2,8 @@
 /**
  * Description of Router.php.
  *
- * @package \
+ * @package Kinone\Yaf
+ * @author zhenhao <phpcandy@163.com>
  */
 namespace Kinone\Yaf;
 

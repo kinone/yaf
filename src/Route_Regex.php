@@ -3,6 +3,7 @@
  * Description of Route_Regex.php.
  *
  * @package Kinone\Yaf
+ * @author zhenhao <phpcandy@163.com>
  */
 
 namespace Kinone\Yaf;
@@ -90,9 +91,35 @@ final class Route_Regex implements Route_Interface
         return true;
     }
 
+    /**
+     * @param array $info
+     * @param array $query
+     * @return string
+     */
     public function assemble(array $info, array $query = [])
     {
-        // TODO: Implement assemble() method.
+        if (!strlen($this->_reverse)) {
+            return '';
+        }
+
+        $uri = $this->_reverse;
+        if (isset($info[':m'])) {
+            $uri = str_replace(':m', strval($info[':m']), $uri);
+        }
+
+        if (isset($info[':c'])) {
+            $uri = str_replace(':c', strval($info[':c']), $uri);
+        }
+
+        if (isset($info[':a'])) {
+            $uri = str_replace(':a', strval($info[':a']), $uri);
+        }
+
+        if ($query) {
+            $uri .= '?' . http_build_query($query);
+        }
+
+        return $uri;
     }
 
     private function match($uri, &$args)

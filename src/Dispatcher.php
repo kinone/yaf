@@ -3,6 +3,7 @@
  * Description of Dispatcher.php.
  *
  * @package Kinone\Yaf
+ * @author zhenhao <phpcandy@163.com>
  */
 
 namespace Kinone\Yaf;
@@ -215,7 +216,13 @@ final class Dispatcher
         }
         $controllerName = ucfirst($controller) . 'Controller';
 
-        return new $controllerName($this->_request, $response, $this->_view);
+        $controller = new $controllerName($this->_request, $response, $this->_view);
+
+        if (!$controller instanceof Controller_Abstract) {
+            throw new Exception_TypeError(sprintf('Controller must be instance of %s', Controller_Abstract::class));
+        }
+
+        return$controller;
     }
 
     private function _fixDefault(Request_Abstract $request)

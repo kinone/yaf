@@ -3,6 +3,7 @@
  * Description of Config_Simple.php.
  *
  * @package Kinone\Yaf
+ * @author zhenhao <phpcandy@163.com>
  */
 
 namespace Kinone\Yaf;

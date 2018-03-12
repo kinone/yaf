@@ -3,6 +3,7 @@
  * Description of Route_Static.php.
  *
  * @package Kinone\Yaf
+ * @author zhenhao <phpcandy@163.com>
  */
 
 namespace Kinone\Yaf;
@@ -55,9 +56,31 @@ final class Route_Static implements Route_Interface
         return true;
     }
 
+    /**
+     * @param string[] $info
+     * @param array $query
+     * @return string
+     */
     public function assemble(array $info, array $query = [])
     {
-        // TODO: Implement assemble() method.
+        $tmp = [];
+        if (isset($info[':m'])) {
+            $tmp[] = strval($info[':m']);
+        }
+
+        if (!isset($info[':c']) || !($controller = strval($info[':c']))) {
+            throw new Exception_TypeError('You should be specify the controller by :c');
+        }
+        $tmp[] = $controller;
+
+        if (!isset($info[':a']) || !($action = strval($info[':a']))) {
+            throw new Exception_TypeError('You should be specify the action by :a');
+        }
+        $tmp[] = $action;
+
+        $uri = '/' . implode('/', $tmp);
+
+        return $query ? $uri . '?' . http_build_query($query) : $uri;
     }
 
     public function match($uri)

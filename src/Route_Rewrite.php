@@ -3,6 +3,7 @@
  * Description of Route_Rewrite.php.
  *
  * @package Kinone\Yaf
+ * @author zhenhao <phpcandy@163.com>
  */
 
 namespace Kinone\Yaf;
@@ -58,9 +59,39 @@ final class Route_Rewrite implements Route_Interface
         return true;
     }
 
+    /**
+     * @param array $info
+     * @param array $query
+     * @return string
+     */
     public function assemble(array $info, array $query = [])
     {
-        // TODO: Implement assemble() method.
+        $segs = explode('/', $this->_match);
+        foreach($segs as $i => $seg) {
+            if ($seg === '*') {
+                $segs[$i] = '';
+                foreach($info as $k => $v) {
+                    if (!is_int($k)) {
+                        $segs[$i] = implode('/', [$segs[$i], $k, strval($v)]);
+                    }
+                }
+                $segs[$i] = ltrim($segs[$i], '/');
+                break;
+            } else if (strlen($seg) && $seg[0] == ':') {
+                if (isset($info[$seg])) {
+                    $segs[$i] = strval($info[$seg]);
+                    unset($info[$seg]);
+                }
+            }
+        }
+
+        $uri = implode('/', $segs);
+
+        if ($query) {
+            $uri .= '?' . http_build_query($query);
+        }
+
+        return $uri;
     }
 
     protected function match($uri, &$matches)

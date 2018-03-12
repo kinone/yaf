@@ -3,6 +3,7 @@
  * Description of Route_Map.php.
  *
  * @package Kinone\Yaf
+ * @author zhenhao <phpcandy@163.com>
  */
 
 namespace Kinone\Yaf;
@@ -73,6 +74,33 @@ final class Route_Map implements Route_Interface
 
     public function assemble(array $info, array $query = [])
     {
-        // TODO: Implement assemble() method.
+        if ($this->ctlPrefer) {
+            if (!isset($info[':c'])) {
+                throw new Exception_TypeError('undefined the \'controller\' parameter for 1st parameter');
+            } else {
+                $pname = strval($info[':c']);
+            }
+        } else {
+            if (!isset($info[':a'])) {
+                throw new Exception_TypeError('undefined the \'action\' parameter for 1st parameter');
+            } else {
+                $pname = strval($info[':a']);
+            }
+        }
+
+        $uri = '/' . str_replace('_', '/', $pname);
+
+        if ($query) {
+            if ($this->delimeter) {
+                $uri .= '/' . $this->delimeter;
+                foreach($query as $k => $v) {
+                    $uri = implode('/', [$uri, $k, $v]);
+                }
+            } else {
+                $uri .= '?' . http_build_query($query);
+            }
+        }
+
+        return $uri;
     }
 }

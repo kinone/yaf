@@ -3,6 +3,7 @@
  * Description of Application.php.
  *
  * @package Kinone\Yaf
+ * @author zhenhao <phpcandy@163.com>
  */
 
 namespace Kinone\Yaf;
@@ -67,6 +68,8 @@ class Application
         $localLibary = $this->config->get('application.libaray');
         $globalLibary = ini_get('yaf.library');
         Loader::getInstance($localLibary, $globalLibary);
+
+        ob_start();
     }
 
     public function bootstrap(Bootstrap_Abstract $bootstrap = null)
@@ -114,6 +117,8 @@ class Application
 
         $response = Dispatcher::getInstance()->dispatch($request);
         $response->response();
+
+        ob_end_flush();
     }
 
     public function execute()

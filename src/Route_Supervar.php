@@ -3,6 +3,7 @@
  * Description of Route_Supervar.php.
  *
  * @package Kinone\Yaf
+ * @author zhenhao <phpcandy@163.com>
  */
 
 namespace Kinone\Yaf;
@@ -39,8 +40,35 @@ final class Route_Supervar implements Route_Interface
         return true;
     }
 
+    /**
+     * @param array $info
+     * @param array $query
+     * @return string
+     */
     public function assemble(array $info, array $query = [])
     {
-        // TODO: Implement assemble() method.
+        $uri = '?';
+        $tmp = [];
+        if (isset($info[':m'])) {
+            $tmp[] = strval($info[':m']);
+        }
+
+        if (!isset($info[':c']) || !($controller = strval($info[':c']))) {
+            throw new Exception_TypeError('You should be specify the controller by :c');
+        }
+        $tmp[] = $controller;
+
+        if (!isset($info[':a']) || !($action = strval($info[':a']))) {
+            throw new Exception_TypeError('You should be specify the action by :a');
+        }
+        $tmp[] = $action;
+
+        $uri .= http_build_query([$this->varname => '/' . implode('/', $tmp)]);
+
+        if ($query) {
+            $uri .= '&' . http_build_query($query);
+        }
+
+        return $uri;
     }
 }
