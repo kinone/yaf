@@ -185,8 +185,6 @@ abstract class Controller_Abstract
      */
     public function dispaly($tpl, $vars = [])
     {
-        Dispatcher::getInstance()->disableView();
-
         $name = str_replace('_', DIRECTORY_SEPARATOR, $this->_name);
         if ($tpl[0] !== '/') {
             $ext = Application::app()->getConfig()->get('application.view.ext') ?: 'php';
@@ -202,8 +200,6 @@ abstract class Controller_Abstract
      */
     public function render($tpl, $vars = [])
     {
-        Dispatcher::getInstance()->disableView();
-
         $name = str_replace('_', DIRECTORY_SEPARATOR, $this->_name);
         if ($tpl[0] !== '/') {
             $ext = Application::app()->getConfig()->get('application.view.ext') ?: 'php';

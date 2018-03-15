@@ -43,7 +43,7 @@ class Config_Ini extends Config_Abstract
         }
     }
 
-    public function get($name, $default = false)
+    public function get($name, $default = null)
     {
         if (!isset($this->_keys[$name])) {
             return $default;

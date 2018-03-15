@@ -45,7 +45,7 @@ class Request_Simple extends Request_Abstract
         return $default;
     }
 
-    public function isXmlHttpRequest($name, $default = null)
+    public function isXmlHttpRequest()
     {
         return false;
     }

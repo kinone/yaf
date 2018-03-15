@@ -158,7 +158,7 @@ class Request_Http extends Request_Abstract
         return (isset($_FILES[$name])) ? $_FILES[$name] : $default;
     }
 
-    public function isXmlHttpRequest($name, $default = null)
+    public function isXmlHttpRequest()
     {
         $str = $this->getServer('HTTP_X_REQUESTED_WITH', '');
 

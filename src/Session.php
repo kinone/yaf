@@ -12,11 +12,13 @@ final class Session implements \Iterator, \ArrayAccess, \Countable
 {
     private static $_instance;
     private $_session;
-    private $_started;
+    private $_status;
 
     private function __construct()
     {
-        $this->_started = false;
+        $this->_status = false;
+        $this->start();
+        $this->_session = &$_SESSION;
     }
 
     public static function getInstance()
@@ -30,30 +32,47 @@ final class Session implements \Iterator, \ArrayAccess, \Countable
 
     public function start()
     {
-        if (!$this->_started) {
+        if (!$this->_status) {
             session_start();
-            $this->_started = true;
+            $this->_status = true;
         }
+
+        return $this;
     }
 
     public function get($name)
     {
+        if (isset($this->_session[$name])) {
+            return $this->_session[$name];
+        }
 
+        return null;
+    }
+
+    public function set($name, $value)
+    {
+        $this->_session[$name] = $value;
+
+        return $this;
     }
 
     public function has($name)
     {
-
+        return isset($this->_session[$name]);
     }
 
     public function del($name)
     {
+        unset($this->_session[$name]);
 
+        return $this;
     }
 
     public function clear()
     {
+        $this->_session = [];
 
+        return $this;
     }
 
     /**
@@ -64,7 +83,7 @@ final class Session implements \Iterator, \ArrayAccess, \Countable
      */
     public function current()
     {
-        // TODO: Implement current() method.
+        return current($this->_session);
     }
 
     /**
@@ -75,7 +94,7 @@ final class Session implements \Iterator, \ArrayAccess, \Countable
      */
     public function next()
     {
-        // TODO: Implement next() method.
+        next($this->_session);
     }
 
     /**
@@ -86,7 +105,7 @@ final class Session implements \Iterator, \ArrayAccess, \Countable
      */
     public function key()
     {
-        // TODO: Implement key() method.
+        return key($this->_session);
     }
 
     /**
@@ -98,7 +117,7 @@ final class Session implements \Iterator, \ArrayAccess, \Countable
      */
     public function valid()
     {
-        // TODO: Implement valid() method.
+        return key($this->_session) == null;
     }
 
     /**
@@ -109,7 +128,7 @@ final class Session implements \Iterator, \ArrayAccess, \Countable
      */
     public function rewind()
     {
-        // TODO: Implement rewind() method.
+        reset($this->_session);
     }
 
     /**
@@ -126,7 +145,7 @@ final class Session implements \Iterator, \ArrayAccess, \Countable
      */
     public function offsetExists($offset)
     {
-        // TODO: Implement offsetExists() method.
+        return $this->has($offset);
     }
 
     /**
@@ -140,7 +159,7 @@ final class Session implements \Iterator, \ArrayAccess, \Countable
      */
     public function offsetGet($offset)
     {
-        // TODO: Implement offsetGet() method.
+        return $this->get($offset);
     }
 
     /**
@@ -157,7 +176,7 @@ final class Session implements \Iterator, \ArrayAccess, \Countable
      */
     public function offsetSet($offset, $value)
     {
-        // TODO: Implement offsetSet() method.
+        $this->set($offset, $value);
     }
 
     /**
@@ -171,7 +190,7 @@ final class Session implements \Iterator, \ArrayAccess, \Countable
      */
     public function offsetUnset($offset)
     {
-        // TODO: Implement offsetUnset() method.
+        $this->del($offset);
     }
 
     /**
@@ -185,6 +204,6 @@ final class Session implements \Iterator, \ArrayAccess, \Countable
      */
     public function count()
     {
-        // TODO: Implement count() method.
+        return count($this->_session);
     }
 }

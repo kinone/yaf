@@ -54,7 +54,7 @@ abstract class Request_Abstract
     abstract public function getRequest($name, $default = null);
     abstract public function getCookie($name, $default = null);
     abstract public function getFiles($name, $default = null);
-    abstract public function isXmlHttpRequest($name, $default = null);
+    abstract public function isXmlHttpRequest();
 
     public function isGet()
     {

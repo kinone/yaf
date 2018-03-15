@@ -55,8 +55,8 @@ class Application
     {
         self::$_app = $this;
 
-        $this->_handleError();
-        $this->_handleException();
+        $this->dispatcher = Dispatcher::getInstance();
+        $this->dispatcher->setRequest(new Request_Http());
 
         ob_start();
 
@@ -71,8 +71,13 @@ class Application
             $this->config = new Config_Ini($config, $environ);
         }
 
-        $this->dispatcher = Dispatcher::getInstance();
-        $this->dispatcher->setRequest(new Request_Http());
+        if (null !== ($throwException = $this->config->get('application.dispatcher.throwException'))) {
+            $this->dispatcher->throwException(boolval($throwException));
+        }
+
+        if (null !== ($catchException = $this->config->get('application.dispatcher.catchException'))) {
+            $this->dispatcher->catchException(boolval($catchException));
+        }
 
         $this->appDirectory = $this->config->get('application.directory');
 
@@ -209,28 +214,5 @@ class Application
     public function getAppDirectory()
     {
         return $this->appDirectory;
-    }
-
-    private function _handleError()
-    {
-        set_error_handler(function($code, $message, $file, $line){
-            if (!(error_reporting() & $code)) {
-                return false;
-            }
-
-            throw new \ErrorException($message, $code, 0, $file, $line);
-        });
-    }
-
-    private function _handleException()
-    {
-        set_exception_handler(function($exception){
-            ob_end_clean();
-            if (!$exception instanceof Exception) {
-                throw new Exception($exception->getMessage(), $exception->getCode());
-            } else {
-                throw $exception;
-            }
-        });
     }
 }

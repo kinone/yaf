@@ -70,6 +70,12 @@ final class Route_Map implements Route_Interface
         return true;
     }
 
+    /**
+     * @param array $info
+     * @param array $query
+     * @return string
+     * @throws Exception_TypeError
+     */
     public function assemble(array $info, array $query = [])
     {
         if ($this->ctlPrefer) {

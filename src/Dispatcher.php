@@ -26,6 +26,11 @@ final class Dispatcher
     private $_request;
 
     /**
+     * @var Response_Abstract
+     */
+    private $_response;
+
+    /**
      * @var Plugin_Abstract
      */
     private $_plugins;
@@ -79,6 +84,9 @@ final class Dispatcher
     {
         $this->_router = new Router();
         $this->_plugins = [];
+
+        $this->_handleError();
+        $this->_handleException();
     }
 
     /**
@@ -109,53 +117,52 @@ final class Dispatcher
             $this->_request = $request;
         }
 
-        $response = $request->isCli() ? new Response_Cli() : new Response_Http();
+        $this->_response = $request->isCli() ? new Response_Cli() : new Response_Http();
+        $this->initView(null);
 
         if (!$request->isRouted()) {
 
-            $this->_notifyPlugins('routerStartup', $response);
+            $this->_notifyPlugins('routerStartup');
             if (!$this->_router->route($request)) {
                 throw new Exception_RouterFailed('route failed');
             }
             $this->_fixDefault($request);
-            $this->_notifyPlugins('routerShutdown', $response);
+            $this->_notifyPlugins('routerShutdown');
         } else {
             $this->_fixDefault($request);
         }
-        $this->_notifyPlugins('dispatchLoopStartup', $response);
+        $this->_notifyPlugins('dispatchLoopStartup');
 
-        $this->initView(null);
         $nesting = 5;
 
         do {
-            $this->_notifyPlugins('preDispatch', $response);
+            $this->_notifyPlugins('preDispatch');
 
-            $this->_handle($response);
+            $this->_handle();
 
             $this->_fixDefault($request);
 
-            $this->_notifyPlugins('postDispatch', $response);
+            $this->_notifyPlugins('postDispatch');
         } while (--$nesting > 0 && !$this->_request->isDispatched());
 
-        $this->_notifyPlugins('dispatchLoopShutdown', $response);
+        $this->_notifyPlugins('dispatchLoopShutdown');
 
         if ($nesting == 0 && !$request->isDispatched()) {
             throw new Exception_DispatchFailed(sprintf('The max dispatch nesting %d was reached', 5));
         }
 
         if (!$this->_returnResponse) {
-            $response->response();
-            $response->clearBody();
+            $this->_response->response();
+            $this->_response->clearBody();
         }
 
-        return $response;
+        return $this->_response;
     }
 
     /**
-     * @param Response_Abstract $response
      * @throws Exception
      */
-    private function _handle(Response_Abstract $response)
+    private function _handle()
     {
         $this->_request->setDispatched(true);
 
@@ -180,10 +187,10 @@ final class Dispatcher
             throw new Exception_DispatchFailed('Unexcepted a empty controller name');
         }
 
-        $controllerObject = $this->_genController($appDir, $module, $controller, $response);
+        $controllerObject = $this->_genController($appDir, $module, $controller, $this->_response);
         if (!$this->_request->isDispatched()) {
             // forward is called in init function
-            $this->_handle($response);
+            $this->_handle();
         }
 
         if ($module == $this->_defaultModule) {
@@ -209,7 +216,7 @@ final class Dispatcher
         if ($this->_autoRender) {
             if (!$this->_instantlyFlush) {
                 $content = $controllerObject->render($action);
-                $response->appendBody($content);
+                $this->_response->appendBody($content);
             } else {
                 $controllerObject->dispaly($action);
             }
@@ -277,14 +284,14 @@ final class Dispatcher
         }
     }
 
-    private function _notifyPlugins($event, Response_Abstract $response)
+    private function _notifyPlugins($event)
     {
         foreach ($this->_plugins as $plugin) {
             if (!method_exists($plugin, $event)) {
                 continue;
             }
 
-            call_user_func_array([$plugin, $event], [$this->_request, $response]);
+            call_user_func_array([$plugin, $event], [$this->_request, $this->_response]);
         }
     }
 
@@ -412,5 +419,36 @@ final class Dispatcher
         $this->_catchException = $flag;
 
         return $this;
+    }
+
+    private function _handleError()
+    {
+        set_error_handler(function($code, $message, $file, $line){
+            if (!(error_reporting() & $code)) {
+                return false;
+            }
+
+            throw new \ErrorException($message, $code, 0, $file, $line);
+        });
+    }
+
+    private function _handleException()
+    {
+        set_exception_handler(function($exception){
+            ob_end_clean();
+
+            // dispatch 之前的异常不作处理
+            if ($this->catchException() && $this->_response) {
+                $this->_request->setDispatched(false)
+                    ->setModuleName($this->_defaultModule)
+                    ->setControllerName('error')
+                    ->setActionName('error')
+                    ->setParam('exception', $exception);
+                $this->_handle();
+                $this->_response->response();
+            } else {
+                throw $exception;
+            }
+        });
     }
 }

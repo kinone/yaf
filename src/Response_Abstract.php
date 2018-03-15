@@ -17,6 +17,7 @@ abstract class Response_Abstract
 
     public function __construct()
     {
+        $this->_body[self::DEFAULT_BODY] = '';
     }
 
     /**
