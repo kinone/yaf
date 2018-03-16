@@ -102,7 +102,7 @@ abstract class Controller_Abstract
 
     public function redirect($url)
     {
-        header('Location:' . $url);
+        $this->getResponse()->setRedirect($url);
     }
 
     public function getModuleName()

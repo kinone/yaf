@@ -88,6 +88,12 @@ abstract class Response_Abstract
         return $this;
     }
 
+
+    public function setRedirect($uri)
+    {
+        header('Location: ' . $uri);
+    }
+
     public function response()
     {
         echo $this;

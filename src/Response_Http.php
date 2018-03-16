@@ -14,8 +14,21 @@ class Response_Http extends Response_Abstract
 
     protected $_responseCode;
 
-    public function setHeader($name, $value, $rep, $responseCode)
+    /**
+     * @param string $name
+     * @param string $value
+     * @param bool $replace
+     * @param int $responseCode
+     * @return $this
+     */
+    public function setHeader($name, $value, $replace = true, $responseCode = 0)
     {
+        if ($responseCode) {
+            $this->_responseCode = $responseCode;
+        }
+
+        $this->_header[$name] = [$value, $replace];
+
         return $this;
     }
 
@@ -40,6 +53,14 @@ class Response_Http extends Response_Abstract
 
     public function response()
     {
+        if ($this->_responseCode) {
+            http_response_code($this->_responseCode);
+        }
+
+        foreach ($this->_header as $name => $val) {
+            header(sprintf('%s:%s', $name, $val[0], $val[1]));
+        }
+
         parent::response();
     }
 }
