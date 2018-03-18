@@ -27,14 +27,39 @@ final class Route_Supervar implements Route_Interface
             return false;
         }
 
-        $arr = explode('/', trim($var, '/'));
-        $module = array_shift($arr);
-        $controller = array_shift($arr);
-        $action = array_shift($arr);
+        $arr = array_filter(explode('/', trim($var, '/')));
+        switch($count = count($arr)) {
+            case $count == 1:
+                $action = array_shift($arr);
+                $request->setActionName($action);
+                break;
+            case $count == 2:
+                $controller = array_shift($arr);
+                $action = array_shift($arr);
+                $request->setControllerName($controller)
+                    ->setActionName($action);
+                break;
+            case $count >= 3:
+                $module = array_shift($arr);
+                $controller = array_shift($arr);
+                $action = array_shift($arr);
+                $request->setModuleName($module)
+                    ->setControllerName($controller)
+                    ->setActionName($action);
+                break;
+        }
 
-        $request->setModuleName($module)
-            ->setControllerName($controller)
-            ->setActionName($action)
+        $params = [];
+        foreach ($arr as $item) {
+            if (!isset($last)) {
+                $params[$item] = null;
+                $last = $item;
+            } else {
+                $params[$last] = $item;
+                unset($last);
+            }
+        }
+        $request->setParam($params)
             ->setRouted(true);
 
         return true;

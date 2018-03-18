@@ -21,7 +21,7 @@ final class Route_Static implements Route_Interface
         $controller = null;
         $action = null;
 
-        $arr = explode('/', trim($pathinfo, '/'));;
+        $arr = array_filter(explode('/', trim($pathinfo, '/')));
         switch ($count = count($arr)) {
             case $count == 1:
                 $controller = array_shift($arr);
