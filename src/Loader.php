@@ -19,18 +19,18 @@ final class Loader
      */
     private static $ins;
 
-    private function __construct($localLibrary, $gloablLibaray)
+    private function __construct($localLibrary, $globalLibrary)
     {
         if (!$localLibrary) {
             $localLibrary = Application::app()->getAppDirectory() . '/library';
         }
 
-        if (!$gloablLibaray) {
-            $gloablLibaray = $localLibrary;
+        if (!$globalLibrary) {
+            $globalLibrary = $localLibrary;
         }
 
         $this->localLibrary = $localLibrary;
-        $this->globalLibrary = $gloablLibaray;
+        $this->globalLibrary = $globalLibrary;
     }
 
     public static function autoload($name)

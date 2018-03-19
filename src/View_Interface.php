@@ -38,5 +38,5 @@ interface View_Interface
      * @param array $tplVars
      * @return void
      */
-    public function dispaly($tpl, $tplVars = []);
+    public function display($tpl, $tplVars = []);
 }

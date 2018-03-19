@@ -17,7 +17,8 @@ class View_Simple implements View_Interface
     public function __construct($tplDir, $options = [])
     {
         $this->_tplDir = $tplDir;
-        $this->_tplVars = $options;
+        $this->_options = $options;
+        $this->_tplVars = [];
     }
 
     public function get($name)
@@ -104,7 +105,7 @@ class View_Simple implements View_Interface
      * @param array $tplVars
      * @throws Exception_LoadFailed_View
      */
-    public function dispaly($tpl, $tplVars = [])
+    public function display($tpl, $tplVars = [])
     {
         echo $this->render($tpl, $tplVars);
     }

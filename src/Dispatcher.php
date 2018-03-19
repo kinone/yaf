@@ -218,7 +218,7 @@ final class Dispatcher
                 $content = $controllerObject->render($action);
                 $this->_response->appendBody($content);
             } else {
-                $controllerObject->dispaly($action);
+                $controllerObject->display($action);
             }
         }
     }
@@ -314,7 +314,11 @@ final class Dispatcher
 
     public function initView($tplDir, $options = [])
     {
-        $this->_view = new View_Simple($tplDir, $options);
+        if (!$this->_view instanceof View_Interface) {
+            $this->_view = new View_Simple($tplDir, $options);
+        }
+
+        return $this->_view;
     }
 
     public function setView(View_Interface $view)

@@ -183,14 +183,14 @@ abstract class Controller_Abstract
      * @param string $tpl
      * @param array $vars
      */
-    public function dispaly($tpl, $vars = [])
+    public function display($tpl, $vars = [])
     {
         $name = str_replace('_', DIRECTORY_SEPARATOR, $this->_name);
         if ($tpl[0] !== '/') {
             $ext = Application::app()->getConfig()->get('application.view.ext') ?: 'php';
             $tpl = implode(DIRECTORY_SEPARATOR, [$name, $tpl . '.' . $ext]);
         }
-        $this->_view->dispaly($tpl, $vars);
+        $this->_view->display($tpl, $vars);
     }
 
     /**
@@ -205,6 +205,7 @@ abstract class Controller_Abstract
             $ext = Application::app()->getConfig()->get('application.view.ext') ?: 'php';
             $tpl = implode(DIRECTORY_SEPARATOR, [$name, $tpl . '.' . $ext]);
         }
+
         return $this->_view->render($tpl, $vars);
     }
 }
