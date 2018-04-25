@@ -78,7 +78,7 @@ class Request_Http extends Request_Abstract
                     $uri = $info['path'];
                 }
             } else if (($pos = strpos($uri, '?')) !== false){
-                $uri = substr($uri, $pos);
+                $uri = substr($uri, 0, $pos);
             }
         } else if ($uri = $this->getServer('ORIG_PATH_INFO')) {
             // do nothing
