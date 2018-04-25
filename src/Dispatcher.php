@@ -210,7 +210,7 @@ final class Dispatcher
                 return;
             }
         } else {
-            throw new Exception_LoadFailed_Action(sprintf('There is no %s in %s', $func, get_class($controllerObject)));
+            throw new Exception_LoadFailed_Action(sprintf('There is no %s in %s', $func, get_class($controllerObject)), 517);
         }
 
         if ($this->_autoRender) {
@@ -241,7 +241,7 @@ final class Dispatcher
         if ($module != $this->_defaultModule) {
             $file = implode(DIRECTORY_SEPARATOR, [$appDir, 'modules', $module, 'controllers', $controller]) . '.php';
             if (!Loader::import($file)) {
-                throw new Exception_LoadFailed_Controller(sprintf('Faild opening controller script: %s', $file));
+                throw new Exception_LoadFailed_Controller(sprintf('Faild opening controller script: %s', $file), 516);
             }
         }
 
@@ -249,7 +249,7 @@ final class Dispatcher
             $ref = new \ReflectionClass($controllerName);
             $controller = $ref->newInstance($this->_request, $response, $this->_view);
         } catch (\Exception $ex) {
-            throw new Exception_LoadFailed_Controller($ex->getMessage());
+            throw new Exception_LoadFailed_Controller($ex->getMessage(), 516);
         }
 
         if (!$controller instanceof Controller_Abstract) {
