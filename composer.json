@@ -2,7 +2,8 @@
     "name": "kinone/yaf",
     "description": "Yaf framework implement by native php",
     "require": {
-        "php": ">=5.6"
+        "php": ">=5.6",
+        "pimple/pimple": "^3.2"
     },
     "license": "MIT",
     "authors": [
