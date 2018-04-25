@@ -34,23 +34,27 @@ final class Registry
         return self::$_instance;
     }
 
-    public function get($name)
+    /**
+     * @param $name
+     * @return mixed
+     */
+    public static function get($name)
     {
-
+        return isset(self::$_instance[$name]) ? self::$_instance[$name] : null;
     }
 
-    public function set($name, $val)
+    public static function set($name, $val)
     {
-
+        self::$_instance[$name] = $val;
     }
 
-    public function hase($name)
+    public static function hase($name)
     {
-
+        return isset(self::$_instance[$name]);
     }
 
-    public function del($name)
+    public static function del($name)
     {
-
+        unset(self::$_instance[$name]);
     }
 }
