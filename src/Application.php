@@ -63,7 +63,7 @@ class Application implements \ArrayAccess
      * @param string|null $environ
      * @throws Exception
      */
-    public function __construct($config, $environ = null)
+    public function __construct($config, $environ)
     {
         self::$_app = $this;
 
@@ -74,9 +74,6 @@ class Application implements \ArrayAccess
 
         ob_start();
 
-        if (!$environ) {
-            $environ = ini_get('yaf.environ') ?: 'product';
-        }
         $this->_environ = $environ;
 
         if (is_array($config)) {

@@ -61,7 +61,7 @@ final class Loader
         return true;
     }
 
-    public static function getInstance($localLibrary, $globalLibrary = null)
+    public static function getInstance($localLibrary = null, $globalLibrary = null)
     {
         if (null == self::$ins) {
             self::$ins = new self($localLibrary, $globalLibrary);
