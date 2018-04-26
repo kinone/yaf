@@ -20,7 +20,7 @@ final class Console
     private $app;
 
     /**
-     * @var Application
+     * @var Handler
      */
     private $handler;
 
@@ -74,6 +74,7 @@ final class Console
 
     /**
      * @return int
+     * @throws \Exception
      */
     public function run()
     {
