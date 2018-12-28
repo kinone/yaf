@@ -9,9 +9,44 @@ namespace Kinone\Yaf;
 
 use Symfony\Component\Console\Application as Handler;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\CommandLoader\CommandLoaderInterface;
+use Symfony\Component\Console\Helper\HelperSet;
+use Symfony\Component\Console\Input\InputDefinition;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
+/**
+ * Class Console
+ * @package Kinone\Yaf
+ *
+ * @method void setVersion($version)
+ * @method void setName($name)
+ * @method void setDispatcher(EventDispatcherInterface $dispatcher)
+ * @method void setCommandLoader(CommandLoaderInterface $commandLoader)
+ * @method void setHelperSet(HelperSet $helperSet)
+ * @method void setDefinition(InputDefinition $definition)
+ * @method void setAutoExit($boolean)
+ * @method void setCatchExceptions($boolean)
+ * @method bool areExceptionsCaught()
+ * @method bool isAutoExitEnabled()
+ * @method bool has(string $name)
+ * @method string getName()
+ * @method string getVersion()
+ * @method string getLongVersion()
+ * @method string getHelp()
+ * @method string findNamespace($namespace)
+ * @method string[] getNamespaces()
+ * @method Command get($name)
+ * @method Command find($name)
+ * @method Command|null add(Command $command)
+ * @method Command[] all($namespace = null)
+ * @method InputDefinition getDefinition()
+ * @method HelperSet function getHelperSet()
+ */
 final class Console
 {
+    /**
+     * @var Console|null
+     */
     private static $ins = null;
 
     /**
@@ -93,11 +128,30 @@ final class Console
     }
 
     /**
-     * @param Command $command
-     * @return Command|null
+     * @param $commandName
+     * @param bool $isSingleCommand
+     * @return $this
      */
-    public function add(Command $command)
+    public function setDefaultCommand($commandName, $isSingleCommand = false)
     {
-        return $this->handler->add($command);
+        $this->handler->setDefaultCommand($commandName, $isSingleCommand);
+
+        return $this;
+    }
+
+    /**
+     * @param $name
+     * @param $arguments
+     * @return mixed
+     */
+    public function __call($name, $arguments)
+    {
+        $callable = [$this->handler, $name];
+
+        if (is_callable($callable)) {
+            return call_user_func_array($callable, $arguments);
+        }
+
+        throw new \RuntimeException("method not found");
     }
 }
