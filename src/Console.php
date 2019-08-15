@@ -12,6 +12,8 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\CommandLoader\CommandLoaderInterface;
 use Symfony\Component\Console\Helper\HelperSet;
 use Symfony\Component\Console\Input\InputDefinition;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -111,9 +113,9 @@ final class Console
      * @return int
      * @throws \Exception
      */
-    public function run()
+    public function run(InputInterface $input = null, OutputInterface $output = null)
     {
-        return $this->handler->run();
+        return $this->handler->run($input, $output);
     }
 
     /**
